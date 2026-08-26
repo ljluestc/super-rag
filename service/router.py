@@ -41,10 +41,22 @@ async def get_documents(
     *, vector_service: BaseVectorDatabase, payload: RequestPayload
 ) -> list[BaseDocumentChunk]:
     chunks = await vector_service.query(
-        input=payload.input, filter=payload.filter, top_k=5
+        input=payload.input, filter=payload.filter, top_k=payload.top_k
     )
     # filter out documents with empty content
     chunks = [chunk for chunk in chunks if chunk.content.strip()]
+
+    # Apply relevancy score threshold if specified
+    if payload.relevancy_score_threshold is not None:
+        chunks = [
+            chunk for chunk in chunks
+            if chunk.metadata and chunk.metadata.get("score", 1.0) >= payload.relevancy_score_threshold
+        ]
+
+    # Limit to top_n if specified
+    if payload.top_n is not None:
+        chunks = chunks[:payload.top_n]
+
     if not len(chunks):
         logger.error(f"No documents found for query: {payload.input}")
         return []
@@ -74,8 +86,21 @@ async def get_documents(
 
 
 async def query(payload: RequestPayload) -> list[BaseDocumentChunk]:
+    query_input = payload.input
+
+    # Apply query transformations if enabled
+    if payload.query_transformation.rewrite:
+        # TODO: Implement query rewriting to improve search relevance
+        pass
+    if payload.query_transformation.fusion:
+        # TODO: Implement query fusion to split into multiple searches
+        pass
+    if payload.query_transformation.step_back:
+        # TODO: Implement step-back prompting for broader context
+        pass
+
     rl = create_route_layer()
-    decision = rl(payload.input).name
+    decision = rl(query_input).name
     encoder = payload.encoder.get_encoder()
 
     if decision == "summarize":

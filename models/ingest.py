@@ -57,24 +57,30 @@ class UnstructuredConfig(BaseModel):
 
 
 class SplitterConfig(BaseModel):
-    name: Literal["semantic", "by_title"] = Field(
-        default="semantic", description="Splitter name, `semantic` or `by_title`"
+    chunk_strategy: Literal["semantic", "by_title"] = Field(
+        default="semantic",
+        description="Chunk splitting strategy: 'semantic' uses semantic similarity, 'by_title' groups by document structure",
+        alias="name",  # backward compatibility
     )
-    min_tokens: int = Field(default=30, description="Only for `semantic` method")
-    max_tokens: int = Field(
-        default=400, description="Only for `semantic` and `recursive` methods"
+    chunk_size: int = Field(
+        default=400,
+        description="Maximum token size for each chunk",
+        alias="max_tokens",  # backward compatibility
     )
+    min_tokens: int = Field(default=30, description="Minimum token size for chunks (semantic method only)")
     rolling_window_size: int = Field(
         default=1,
-        description="Only for `semantic` method, cumulative window size "
-        "for comparing similarity between elements",
+        description="Rolling window size for semantic similarity comparison (semantic method only)",
     )
     prefix_title: bool = Field(
-        default=True, description="Add to split titles, headers, only `semantic` method"
+        default=True, description="Include document titles in chunk prefixes (semantic method only)"
     )
     prefix_summary: bool = Field(
-        default=True, description="Add to split sub-document summary"
+        default=True, description="Include document summaries in chunk prefixes"
     )
+
+    class Config:
+        populate_by_name = True  # Allow both chunk_strategy and name, chunk_size and max_tokens
 
 
 class DocumentProcessorConfig(BaseModel):

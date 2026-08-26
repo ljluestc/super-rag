@@ -157,10 +157,10 @@ class EmbeddingService:
         doc_chunks = []
         for file in tqdm(self.files, desc="Generating chunks"):
             file_metadata = file.metadata or {}
-            logger.info(f"Splitting method: {config.splitter.name}")
+            logger.info(f"Splitting method: {config.splitter.chunk_strategy}")
             try:
                 chunks = []
-                if config.splitter.name == "by_title":
+                if config.splitter.chunk_strategy == "by_title":
                     chunked_elements = await self._partition_file(
                         file, strategy=config.unstructured.partition_strategy
                     )
@@ -176,7 +176,7 @@ class EmbeddingService:
                             ),
                         }
                         chunks.append(chunk_data)
-                if config.splitter.name == "semantic":
+                if config.splitter.chunk_strategy == "semantic":
                     elements = await self._partition_file(
                         file,
                         strategy=config.unstructured.partition_strategy,
@@ -186,7 +186,7 @@ class EmbeddingService:
                         encoder=self.encoder,
                         window_size=config.splitter.rolling_window_size,
                         min_split_tokens=config.splitter.min_tokens,
-                        max_split_tokens=config.splitter.max_tokens,
+                        max_split_tokens=config.splitter.chunk_size,
                     )
                     chunks = await splitter_config(elements=elements, file=file)
 
